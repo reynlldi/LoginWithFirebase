@@ -62,7 +62,13 @@ fun RegisterScreen(
     var password by rememberSaveable {
         mutableStateOf("")
     }
+    var confirmPassword by rememberSaveable {
+        mutableStateOf("")
+    }
     val passwordVisible = remember {
+        mutableStateOf(false)
+    }
+    val confirmPasswordVisible = remember {
         mutableStateOf(false)
     }
     val scope = rememberCoroutineScope()
@@ -130,17 +136,61 @@ fun RegisterScreen(
                 }
             },
             label = {
-                Text(text = "password")
+                Text(text = "Password")
             }
         )
+        Spacer(modifier = Modifier.height(16.dp))
+        OutlinedTextField(
+            value = confirmPassword,
+            onValueChange = { confirmPassword = it },
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(8.dp),
+            singleLine = true,
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+            visualTransformation = if (confirmPasswordVisible.value) VisualTransformation.None else PasswordVisualTransformation(),
+            trailingIcon = {
+                val iconImage = if (confirmPasswordVisible.value) {
+                    Icons.Outlined.Visibility
+                } else {
+                    Icons.Outlined.VisibilityOff
+                }
+
+                val description = if (confirmPasswordVisible.value) {
+                    "Visibility Icon"
+                } else {
+                    "Visibility Off Icon"
+                }
+
+                IconButton(
+                    onClick = {
+                        confirmPasswordVisible.value = !confirmPasswordVisible.value
+                    }
+                ) {
+                    Icon(imageVector = iconImage, contentDescription = description)
+                }
+            },
+            label = {
+                Text(text = "Confirm Password")
+            }
+        )
+        Spacer(modifier = Modifier.height(16.dp))
         Button(
             onClick = {
                 scope.launch {
-                    viewModel.registerUser(email, password){
-                        navController.navigate(Screen.Home.route)
+                    if (password == confirmPassword) {
+                        viewModel.registerUser(email = email, password = password) {
+                            navController.navigate(Screen.Home.route){
+                                popUpTo(Screen.Login.route){
+                                    inclusive = true
+                                }
+                            }
+                            email = ""
+                            password = ""
+                            confirmPassword = ""
+                        }
+                    } else {
+                        Toast.makeText(context, "Password not match", Toast.LENGTH_SHORT).show()
                     }
-                    email = ""
-                    password = ""
                 }
             },
             modifier = Modifier
@@ -152,14 +202,6 @@ fun RegisterScreen(
                 text = "Register"
             )
         }
-//        Row(
-//            modifier = Modifier.fillMaxWidth(),
-//            horizontalArrangement = Arrangement.Center
-//        ) {
-//            if (state.value?.isLoading == true) {
-//                CircularProgressIndicator()
-//            }
-//        }
         Row(
             modifier = Modifier
                 .fillMaxWidth()

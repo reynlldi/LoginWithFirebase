@@ -1,3 +1,5 @@
+@file:Suppress("DEPRECATION")
+
 package com.example.loginwithfirebase.presentation.login
 
 import android.widget.Toast
@@ -22,6 +24,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Visibility
 import androidx.compose.material.icons.outlined.VisibilityOff
 import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -54,10 +57,10 @@ import com.example.loginwithfirebase.util.Constant.SERVER_CLIENT
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import com.google.android.gms.common.api.ApiException
+import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.GoogleAuthProvider
 import kotlinx.coroutines.launch
 
-@Suppress("DEPRECATION")
 @Composable
 fun LoginScreen(
     navController: NavController,
@@ -66,18 +69,23 @@ fun LoginScreen(
 ) {
     val googleLoginState = viewModel.googleState.value
 
-    val launcher = rememberLauncherForActivityResult(contract = ActivityResultContracts.StartActivityForResult()) {
-        val account = GoogleSignIn.getSignedInAccountFromIntent(it.data)
-        try{
-            val result = account.getResult(ApiException::class.java)
-            val credentials = GoogleAuthProvider.getCredential(result.idToken, null)
-            viewModel.loginByGoogle(credentials){
-                navController.navigate(Screen.Home.route)
+    val launcher =
+        rememberLauncherForActivityResult(contract = ActivityResultContracts.StartActivityForResult()) {
+            val account = GoogleSignIn.getSignedInAccountFromIntent(it.data)
+            try {
+                val result = account.getResult(ApiException::class.java)
+                val credentials = GoogleAuthProvider.getCredential(result.idToken, null)
+                viewModel.loginByGoogle(credentials) {
+                    navController.navigate(Screen.Home.route) {
+                        popUpTo(Screen.Login.route) {
+                            inclusive = true
+                        }
+                    }
+                }
+            } catch (it: ApiException) {
+                print(it)
             }
-        }catch (it: ApiException){
-            print(it)
         }
-    }
 
     var email by rememberSaveable {
         mutableStateOf("")
@@ -150,17 +158,21 @@ fun LoginScreen(
                     }
                 },
                 label = {
-                    Text(text = "password")
+                    Text(text = "Password")
                 }
             )
             Button(
                 onClick = {
                     scope.launch {
                         viewModel.loginUser(email, password) {
-                            navController.navigate(Screen.Home.route)
+                            navController.navigate(Screen.Home.route) {
+                                popUpTo(Screen.Login.route) {
+                                    inclusive = true
+                                }
+                            }
+                            email = ""
+                            password = ""
                         }
-                        email = ""
-                        password = ""
                     }
                 },
                 modifier = Modifier
@@ -172,14 +184,6 @@ fun LoginScreen(
                     text = "Login"
                 )
             }
-//        Row(
-//            modifier = Modifier.fillMaxWidth(),
-//            horizontalArrangement = Arrangement.Center
-//        ) {
-//            if (state.value?.isLoading == true) {
-//                CircularProgressIndicator()
-//            }
-//        }
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -212,10 +216,11 @@ fun LoginScreen(
             ) {
                 IconButton(
                     onClick = {
-                        val googleLogin = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
-                            .requestEmail()
-                            .requestIdToken(SERVER_CLIENT)
-                            .build()
+                        val googleLogin =
+                            GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+                                .requestEmail()
+                                .requestIdToken(SERVER_CLIENT)
+                                .build()
 
                         val googleLoginClient = GoogleSignIn.getClient(context, googleLogin)
 
@@ -257,12 +262,19 @@ fun LoginScreen(
                 }
                 LaunchedEffect(key1 = googleLoginState.success) {
                     scope.launch {
-                        if (googleLoginState.success != null){
-                            Toast.makeText(context, "Login With Google Success", Toast.LENGTH_SHORT).show()
+                        if (googleLoginState.success != null) {
+                            Toast.makeText(context, "Login With Google Success", Toast.LENGTH_SHORT)
+                                .show()
                         }
                     }
                 }
             }
+        }
+        if (state.value?.isLoading == true) {
+            CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+        }
+        if (googleLoginState.loading) {
+            CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
         }
     }
 }

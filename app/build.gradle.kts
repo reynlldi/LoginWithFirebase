@@ -88,4 +88,7 @@ dependencies {
     // firebase
     implementation(platform("com.google.firebase:firebase-bom:33.0.0"))
     implementation("com.google.firebase:firebase-analytics")
+
+    // lottie
+    implementation("com.airbnb.android:lottie-compose:6.4.0")
 }

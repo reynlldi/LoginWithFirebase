@@ -1,7 +1,8 @@
 package com.example.loginwithfirebase.navigation
 
 sealed class Screen (val route: String){
-    object Login: Screen("login")
-    object Register: Screen("register")
-    object Home: Screen("home")
+    data object Login: Screen("login")
+    data object Register: Screen("register")
+    data object Home: Screen("home")
+    data object Splash: Screen("splash")
 }

@@ -1,6 +1,5 @@
 package com.example.loginwithfirebase.presentation.register
 
-import android.util.Patterns
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.loginwithfirebase.data.AuthRepository
